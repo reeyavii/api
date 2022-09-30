@@ -1,6 +1,7 @@
 ﻿#nullable disable
 using API.Auth;
 using API.Models;
+using API.Services.SmsService;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -19,18 +20,56 @@ namespace API.Controllers
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IConfiguration _configuration;
         private readonly DatabaseContext _context;
+        private readonly ISmsService _sms;
 
         public AuthController(
             UserManager<AppUser> userManager,
             RoleManager<IdentityRole> roleManager,
             DatabaseContext context,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            ISmsService sms
+            )
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _configuration = configuration;
             _context = context;
+            _sms = sms;
         }
+
+        [HttpGet]
+        [Route("request-verification/{id}")]
+        public async Task<IActionResult> RequestPin(string id)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+            string phoneNumber = user.PhoneNumber;
+            if (phoneNumber.Count() == 11)
+            {
+                phoneNumber = phoneNumber[1..];
+            }
+            phoneNumber = "+63" + phoneNumber;
+            DateTime dt = DateTime.Now;
+            
+            Random r = new Random();
+            var x = r.Next(0, 1000000);
+            string pin = x.ToString("000000");
+            Verification verification = new Verification
+            {
+                UserId = id,
+                Pin = pin,
+                IssuedDateTime = dt,
+                ExpirationDateTime = dt.AddMinutes(10),
+            };
+            _context.Verifications.Add(verification);
+            await _context.SaveChangesAsync();
+
+            await _sms.SendPin(pin, phoneNumber);
+
+
+            return Ok();
+        }
+
+
 
         [HttpPost]
         [Route("login")]
@@ -72,6 +111,7 @@ namespace API.Controllers
                     FirstName = user.FirstName,
                     LastName = user.LastName,
                     IsAdmin = isAdmin,
+                    verified = user.Verified,
             });
             }
             return Unauthorized();

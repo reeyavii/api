@@ -11,6 +11,7 @@ namespace API.Models
         public string? Status { get; set; }
         public string? Address { get; set; }
         public string? EmployeeId { get; set; }
+        public bool Verified { get; set; } = false;
 
     }
 }
