@@ -69,6 +69,29 @@ namespace API.Controllers
             return Ok();
         }
 
+        [HttpPost]
+        [Route("verify")]
+        public async Task<IActionResult> Verify(Verify verify)
+        {
+            var verification = await _context.Verifications.Where(ver => ver.UserId == verify.UserId && verify.RequestDateTime < ver.ExpirationDateTime && verify.RequestDateTime > ver.IssuedDateTime).OrderByDescending(ver => ver.IssuedDateTime).FirstOrDefaultAsync();
+            if (verification.Pin == verify.Pin)
+            {
+                var user = await _userManager.FindByIdAsync(verify.UserId);
+                user.Verified = true;
+                _context.Entry(user).State = EntityState.Modified;
+                try
+                {
+                    await _context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                   throw;
+                }
+                return Ok();
+            }
+            return BadRequest();
+        }
+
 
 
         [HttpPost]
