@@ -49,7 +49,7 @@ namespace API.Controllers
             }
             phoneNumber = "+63" + phoneNumber;
             DateTime dt = DateTime.Now;
-            
+            //create pin for user
             Random r = new Random();
             var x = r.Next(0, 1000000);
             string pin = x.ToString("000000");
@@ -62,18 +62,17 @@ namespace API.Controllers
             };
             _context.Verifications.Add(verification);
             await _context.SaveChangesAsync();
-
-            await _sms.SendPin(pin, phoneNumber);
-
-
+            await _sms.SendPin(pin, phoneNumber); // sms service from dependency injection
             return Ok();
         }
-
         [HttpPost]
         [Route("verify")]
         public async Task<IActionResult> Verify(Verify verify)
         {
-            var verification = await _context.Verifications.Where(ver => ver.UserId == verify.UserId && verify.RequestDateTime < ver.ExpirationDateTime && verify.RequestDateTime > ver.IssuedDateTime).OrderByDescending(ver => ver.IssuedDateTime).FirstOrDefaultAsync();
+            var verification = await _context.Verifications
+                .Where(ver => ver.UserId == verify.UserId && verify.RequestDateTime < ver.ExpirationDateTime && verify.RequestDateTime > ver.IssuedDateTime)
+                .OrderByDescending(ver => ver.IssuedDateTime)
+                .FirstOrDefaultAsync();
             if (verification.Pin == verify.Pin)
             {
                 var user = await _userManager.FindByIdAsync(verify.UserId);
