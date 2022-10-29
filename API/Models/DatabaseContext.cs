@@ -24,7 +24,11 @@ namespace API.Models
         public DbSet<GroupMember> GroupMembers { get; set; } = null!;
         public DbSet<UserInformation> UserInformations { get; set; } = null!;
         public DbSet<Stall> Stalls { get; set; } = null!;
-        public DbSet<Partner> Partners { get; set; } = null!;
+        public DbSet<Payment> Payments { get; set; } = null!;
+        public DbSet<Verification> Verifications { get; set; } = null!;
+        public DbSet<Receipt> Receipts { get; set; } = null!;
+        public DbSet<Profile> Profiles { get; set; } = null!;      
+
 
 
 

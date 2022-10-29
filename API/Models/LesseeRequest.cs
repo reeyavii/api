@@ -13,5 +13,12 @@
         public string Status { get; set; } = "requested";
         public int  StallNumber { get; set; }
         public string  StallType { get; set; }
+        public string CivilStatus { get; set; }
+        public string Brgy { get; set; }
+        public string Municipality { get; set; }
+        public string ZipCode { get; set; }
+        public string Province { get; set; }
+        public string UserId { get; set; }
+
     }
 }

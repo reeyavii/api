@@ -21,7 +21,11 @@ namespace API.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Stall>>> GetStalls() => await _context.Stalls.ToListAsync();
+        public async Task<ActionResult<IEnumerable<Stall>>> GetStalls() 
+        { 
+            var stalls = await _context.Stalls.OrderBy(stall => stall.StallNumber).ToListAsync() ;
+            return stalls;
+        } 
         [HttpPost]
         public async Task<ActionResult<Stall>> PostStall(Stall stall)
         {
@@ -45,5 +49,41 @@ namespace API.Controllers
 
             return CreatedAtAction("GetInfo", new { id = info.Id }, info);
         }
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutStall(int id, Stall stall)
+        {
+            if (id != stall.Id)
+            {
+                return BadRequest();
+            }
+
+            _context.Entry(stall).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!StallExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return NoContent();
+        }
+        private bool StallExists(int id)
+        {
+            return _context.Stalls.Any(e => e.Id == id);
+        }
+
     }
+
+
 }
+

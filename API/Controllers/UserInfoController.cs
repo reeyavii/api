@@ -22,11 +22,18 @@ namespace API.Controllers
 
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<UserInformation>> GetInfo(int id)
+        public async Task<ActionResult<UserInformation>> GetInfo(string id)
         {
-            var info = await _context.UserInformations.Where(user=>user.Id==id).Include(user=>user.Stall).FirstOrDefaultAsync();
+            var info = await _context.UserInformations.Where(user=>user.UserId==id).Include(user=>user.Stall).FirstOrDefaultAsync();
             return info;
         }
+        [HttpGet("lessee/{id}")]
+        public async Task<ActionResult<UserInformation>> GetInfoId(int id)
+        {
+            var info = await _context.UserInformations.Where(user => user.Id == id).Include(user => user.Stall).FirstOrDefaultAsync();
+            return info;
+        }
+
         [HttpPost]
         public async Task<IActionResult> PostUserInformation([FromBody] LesseeRequest info)
         {
@@ -47,8 +54,15 @@ namespace API.Controllers
                 Address=info.Address,
                 ContactNumber=info.ContactNumber,
                 Email=info.Email,
-                Status=info.Status
-            };
+                Status=info.Status,
+                CivilStatus=info.CivilStatus,
+                Brgy=info.Brgy,
+                Municipality=info.Municipality,
+                ZipCode=info.ZipCode,
+                Province=info.Province,
+                UserId=info.UserId,
+
+    };
             _context.UserInformations.Add(user);
 
             await _context.SaveChangesAsync();

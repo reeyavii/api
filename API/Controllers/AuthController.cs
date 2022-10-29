@@ -1,6 +1,8 @@
 ﻿#nullable disable
 using API.Auth;
 using API.Models;
+using API.Sms;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -19,17 +21,22 @@ namespace API.Controllers
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IConfiguration _configuration;
         private readonly DatabaseContext _context;
+        public static IWebHostEnvironment _webHostEnvironment;
+        private readonly ISmsService _sms;
 
         public AuthController(
             UserManager<AppUser> userManager,
             RoleManager<IdentityRole> roleManager,
             DatabaseContext context,
-            IConfiguration configuration)
+            IWebHostEnvironment webHostEnvironment,
+            IConfiguration configuration, ISmsService sms)
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _configuration = configuration;
             _context = context;
+            _webHostEnvironment = webHostEnvironment;
+            _sms = sms;
         }
 
         [HttpPost]
@@ -72,7 +79,8 @@ namespace API.Controllers
                     FirstName = user.FirstName,
                     LastName = user.LastName,
                     IsAdmin = isAdmin,
-            });
+                    verified = user.Verified,
+                });
             }
             return Unauthorized();
         }
@@ -99,9 +107,15 @@ namespace API.Controllers
                 Status = model.Status,
                 Address = model.Address,
             };
+            Profile profile = new()
+            {
+                UserId = user.Id,
+                Email = model.Email,
+                Address = model.Address,
+                ImageUrl = "",
+            };
 
-
-
+            _context.Profiles.Add(profile);
             // TBA: password check
 
             var result = await _userManager.CreateAsync(user, model.Password);
@@ -119,6 +133,19 @@ namespace API.Controllers
             
             
             return Ok(new Response { Status = "Success", Message = "User created successfully!" });
+        }
+         [Authorize]
+        [HttpPost]
+        [Route("update-password")]
+        public async Task<IActionResult> UpdatePassword([FromBody] Password model)
+        {
+            if (User.Identity != null)
+            {
+              var user = await _userManager.FindByNameAsync(User.Identity?.Name);
+                var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+                var result = await _userManager.ResetPasswordAsync(user, token, model.NewPassword);
+            }
+            return Ok();
         }
 
         [HttpPost]
@@ -183,5 +210,61 @@ namespace API.Controllers
                 );
             return token;
         }
+
+        [HttpGet]
+        [Route("request-verification/{id}")]
+        public async Task<IActionResult> RequestPin(string id)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+            string phoneNumber = user.PhoneNumber;
+            if (phoneNumber.Count() == 11)
+            {
+                phoneNumber = phoneNumber[1..];
+            }
+            phoneNumber = "+63" + phoneNumber;
+            DateTime dt = DateTime.Now;
+
+            Random r = new Random();
+            var x = r.Next(0, 1000000);
+            string pin = x.ToString("000000");
+            Verification verification = new Verification
+            {
+                UserId = id,
+                Pin = pin,
+                IssuedDateTime = dt,
+                ExpirationDateTime = dt.AddMinutes(10),
+            };
+            _context.Verifications.Add(verification);
+            await _context.SaveChangesAsync();
+
+            await _sms.SendPin(pin, phoneNumber);
+
+
+            return Ok();
+        }
+
+        [HttpPost]
+        [Route("verify")]
+        public async Task<IActionResult> Verify(Verify verify)
+        {
+            var verification = await _context.Verifications.Where(ver => ver.UserId == verify.UserId && verify.RequestDateTime < ver.ExpirationDateTime && verify.RequestDateTime > ver.IssuedDateTime).OrderByDescending(ver => ver.IssuedDateTime).FirstOrDefaultAsync();
+            if (verification.Pin == verify.Pin)
+            {
+                var user = await _userManager.FindByIdAsync(verify.UserId);
+                user.Verified = true;
+                _context.Entry(user).State = EntityState.Modified;
+                try
+                {
+                    await _context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    throw;
+                }
+                return Ok();
+            }
+            return BadRequest();
+        }
+
     }
 }
