@@ -143,9 +143,88 @@ namespace API.Controllers
             {
               var user = await _userManager.FindByNameAsync(User.Identity?.Name);
                 var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-                var result = await _userManager.ResetPasswordAsync(user, token, model.NewPassword);
+                var result = await _userManager.ChangePasswordAsync(user, model.OldPassword, model.NewPassword);
+                if (
+                    result.Succeeded == true 
+                    )
+                {
+                    return Ok("Update Password Success");
+                } 
+                else 
+                { return BadRequest("Password Error"); }
             }
-            return Ok();
+            return BadRequest("Password Error");
+        }
+
+        [HttpPost]
+        [Route("update-number-request")]
+        public async Task<IActionResult> UpdateNumber([FromBody] PhoneNumber model)
+        {
+            if (User.Identity != null)
+            {
+                var user = await _userManager.FindByNameAsync(User.Identity?.Name);
+                //user.PhoneNumber = model.Number;
+                //await _userManager.UpdateAsync(user);
+                //await _context.SaveChangesAsync();
+                //if (user != null) 
+                //{
+                //    return Ok();
+                //}    
+                //else
+                //{ return BadRequest("Change Error"); }
+                string phoneNumber = model.Number;
+                if (phoneNumber.Count() == 11)
+                {
+                    phoneNumber = phoneNumber[1..];
+                    phoneNumber = "+63" + phoneNumber;
+                }
+                
+                
+                DateTime dt = DateTime.Now;
+
+                Random r = new Random();
+                var x = r.Next(0, 1000000);
+                string pin = x.ToString("000000");
+                Verification verification = new Verification
+                {
+                    UserId = user.Id,
+                    Pin = pin,
+                    IssuedDateTime = dt,
+                    ExpirationDateTime = dt.AddMinutes(10),
+                };
+                _context.Verifications.Add(verification);
+                await _context.SaveChangesAsync();
+
+                await _sms.SendPin(pin, phoneNumber);
+
+
+                return Ok();
+            }
+            return BadRequest("Change Error");
+        }
+
+        [HttpPost]
+        [Route("update-number-verified/{phoneNumber}")]
+        public async Task<IActionResult> UpdateNumberVerified(string phoneNumber,[FromBody] Verify verify)
+        {
+
+            var verification = await _context.Verifications.Where(ver => ver.UserId == verify.UserId && verify.RequestDateTime < ver.ExpirationDateTime && verify.RequestDateTime > ver.IssuedDateTime).OrderByDescending(ver => ver.IssuedDateTime).FirstOrDefaultAsync();
+            if (verification.Pin == verify.Pin)
+            {
+                var user = await _userManager.FindByIdAsync(verify.UserId);
+                user.PhoneNumber = phoneNumber;
+                _context.Entry(user).State = EntityState.Modified;
+                try
+                {
+                    await _context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    throw;
+                }
+                return Ok();
+            }
+            return BadRequest();
         }
 
         [HttpPost]

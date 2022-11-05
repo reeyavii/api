@@ -1,6 +1,7 @@
 
 using Api.Hubs;
 using API.Models;
+using API.Services;
 using API.Sms;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -22,7 +23,7 @@ builder.Services.AddSignalR();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<ISmsService, SmsService>();
-
+builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddDbContext<DatabaseContext>(options => options.UseSqlServer(configuration.GetConnectionString("DevConnection")));
 builder.Services.AddIdentity<AppUser, IdentityRole>()
     .AddEntityFrameworkStores<DatabaseContext>()

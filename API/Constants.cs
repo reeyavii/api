@@ -9,5 +9,10 @@
             "Pending Confirmation",
             "Payment Success"
             };
+
+        public static List<string> messageStatusList = new List<string>() {
+            "Unread",
+            "Read"
+        };
     }
 }

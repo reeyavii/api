@@ -29,7 +29,7 @@ namespace API.Models
         public DbSet<Receipt> Receipts { get; set; } = null!;
         public DbSet<Profile> Profiles { get; set; } = null!;      
 
-
+        public DbSet<Notification> Notifications { get; set; } = null!;
 
 
     }

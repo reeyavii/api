@@ -9,10 +9,14 @@ namespace API.Controllers
     public class StallsController : ControllerBase
     {
         private readonly DatabaseContext _context;
-        public StallsController(DatabaseContext context)
+       
+        public static IWebHostEnvironment _webHostEnvironment;
+         public StallsController(DatabaseContext context, IWebHostEnvironment webHostEnvironment)
         {
             _context = context;
+            _webHostEnvironment = webHostEnvironment;
         }
+       
         [HttpGet("{id}")]
         public async Task<ActionResult<Stall>> GetStall(int id)
         {
@@ -50,32 +54,68 @@ namespace API.Controllers
             return CreatedAtAction("GetInfo", new { id = info.Id }, info);
         }
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutStall(int id, Stall stall)
+        public async Task<IActionResult> PutStall(int id, [FromForm] Stall stall)
         {
+
             if (id != stall.Id)
             {
                 return BadRequest();
             }
-
-            _context.Entry(stall).State = EntityState.Modified;
-
             try
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!StallExists(id))
+
+                if (stall.StallImage.Length > 0)
                 {
-                    return NotFound();
+                    string path = _webHostEnvironment.WebRootPath + "\\uploads\\";
+                    if (!Directory.Exists(path))
+                    {
+
+                        Directory.CreateDirectory(path);
+
+                    }
+                    Console.WriteLine($"path={path}");
+                    string fileName = "";
+
+                    if (stall.StallImage.FileName.Contains(" "))
+                    {
+                        fileName = string.Join("", stall.StallImage.FileName.Split(" "));
+                    }
+                    else
+                    {
+                        fileName = stall.StallImage.FileName;
+                    }
+
+                    stall.ImageUrl = fileName;
+
+                    using (FileStream fileStream = System.IO.File.Create(path + fileName))
+                    {
+                        stall.StallImage.CopyTo(fileStream);
+                        fileStream.Flush();
+                        _context.Entry(stall).State = EntityState.Modified;
+
+                        try
+                        {
+                            await _context.SaveChangesAsync();
+                        }
+                        catch (DbUpdateConcurrencyException)
+                        {
+                            throw;
+                        }
+
+
+                        return Ok();
+                    }
                 }
                 else
                 {
-                    throw;
+                    return NoContent();
                 }
             }
+            catch (Exception ex)
+            {
+                return NoContent();
+            }
 
-            return NoContent();
         }
         private bool StallExists(int id)
         {

@@ -1,4 +1,5 @@
 ﻿using API.Models;
+using API.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,9 +10,11 @@ namespace API.Controllers
     public class UserInfoController : ControllerBase
     {
         private readonly DatabaseContext _context;
-        public UserInfoController(DatabaseContext context)
+        private readonly INotificationService _notificationService;
+        public UserInfoController(DatabaseContext context, INotificationService notificationService)
         {
             _context = context;
+            _notificationService = notificationService;
         }
         [HttpGet]
         public async Task<ActionResult<IEnumerable<UserInformation>>> GetUserInfos()
@@ -42,6 +45,7 @@ namespace API.Controllers
             {
                 return NotFound();
             }
+
             UserInformation user = new UserInformation
             {
                 Stall = stall,
@@ -63,8 +67,11 @@ namespace API.Controllers
                 UserId=info.UserId,
 
     };
-            _context.UserInformations.Add(user);
+            string fullName = info.FirstName + " " + info.LastName;
+            var notification = _notificationService.SendNotif(fullName, NotificationType.RequestApplicationApproval, "Request Application Approval");
 
+            _context.UserInformations.Add(user);
+            _context.Notifications.Add(notification);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction("GetInfo", new { id =user.Id }, user);

@@ -26,7 +26,14 @@ namespace API.Controllers
             var receipts = await _context.Receipts.Where(r => r.PaymentId == id).OrderByDescending(r => r.Id).ToListAsync();
             return receipts;
         }
-        
+
+        [HttpGet("user/{id}")]
+        public async Task<ActionResult<IEnumerable<Receipt>>> GetUserReceipts(string id)
+        {
+            var payment = await _context.Payments.Where(p => p.userId == id).FirstOrDefaultAsync();
+            var receipts = await _context.Receipts.Where(r => r.PaymentId == payment.Id).OrderByDescending(r => r.Id).ToListAsync();
+            return receipts;
+        }
         [HttpPost]
         public async Task<ActionResult<Receipt>> PostReceipt([FromForm] Receipt objectFile)
         {
