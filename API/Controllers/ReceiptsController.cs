@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using static System.IO.Path;
 using Microsoft.AspNetCore.Authorization;
-
+using Microsoft.AspNetCore.Identity;
 
 namespace API.Controllers
 {
@@ -13,17 +13,20 @@ namespace API.Controllers
     {
         private readonly DatabaseContext _context;
         public static IWebHostEnvironment _webHostEnvironment;
-        public ReceiptsController(DatabaseContext context, IWebHostEnvironment webHostEnvironment)
+        private readonly UserManager<AppUser> _userManager;
+
+        public ReceiptsController(DatabaseContext context, IWebHostEnvironment webHostEnvironment, UserManager<AppUser> userManager)
         {
             _context = context;
             _webHostEnvironment = webHostEnvironment;
+            _userManager = userManager;
         }
 
 
-        [HttpGet("list/{id}")]
-        public async Task<ActionResult<IEnumerable<Receipt>>> GetReceipts(int id)
+        [HttpGet("list")]
+        public async Task<ActionResult<IEnumerable<Receipt>>> GetReceipts()
         {
-            var receipts = await _context.Receipts.Where(r => r.PaymentId == id).OrderByDescending(r => r.Id).ToListAsync();
+            var receipts = await _context.Receipts.ToListAsync();
             return receipts;
         }
 
@@ -33,12 +36,14 @@ namespace API.Controllers
             var payment = await _context.Payments.Where(p => p.userId == id).FirstOrDefaultAsync();
             var receipts = await _context.Receipts.Where(r => r.PaymentId == payment.Id).OrderByDescending(r => r.Id).ToListAsync();
             return receipts;
-        }
+        } 
+        [Authorize]
         [HttpPost]
         public async Task<ActionResult<Receipt>> PostReceipt([FromForm] Receipt objectFile)
         {
             try
             {
+
                 if (objectFile.Image.Length > 0)
                 {
                     string path = _webHostEnvironment.WebRootPath + "\\uploads\\";
@@ -59,23 +64,24 @@ namespace API.Controllers
                     {
                         fileName = objectFile.Image.FileName;
                     }
-                    //var receipt = await _context.Receipts.Where(i => i.Name == fileName).FirstOrDefaultAsync();
-                    //var exist = receipt != null;
-                    //int num = 0;
-                    //if (exist)
-                    //{
-                    //    fileName = GetFileNameWithoutExtension(fileName) + num.ToString() + GetExtension(fileName);
+                    var receiptData = await _context.Receipts.Where(i => i.Name == fileName).FirstOrDefaultAsync();
+                    var exist = receiptData != null;
+                    int num = 0;
+                    if (exist)
+                    {
+                        fileName = GetFileNameWithoutExtension(fileName) + num.ToString() + GetExtension(fileName);
 
-                    //    var checkProductImg = await _context.ProductImages.Where(i => i.Name == fileName).FirstOrDefaultAsync();
-                    //    if (checkProductImg != null)
-                    //    {
-                    //        exist = false;
-                    //    }
-                    //    else
-                    //    {
-                    //        num++;
-                    //    }
-                    //}
+                        var checkReceiptImg = await _context.Receipts.Where(i => i.Name == fileName).FirstOrDefaultAsync();
+                        if (checkReceiptImg != null)
+                        {
+                            exist = false;
+                        }
+                        else
+                        {
+                            num++;
+                        }
+
+                    }
                     Receipt receipt = new()
                     {
                         Id = objectFile.Id,
@@ -86,7 +92,12 @@ namespace API.Controllers
                         ReceiptDate = objectFile.ReceiptDate,
                         Name = fileName,
                     };
-
+                    if (User.Identity != null)
+                    {
+                        var user = await _userManager.FindByNameAsync(User.Identity?.Name);
+                    }
+                        
+                   
                     using (FileStream fileStream = System.IO.File.Create(path + fileName))
                     {
                         objectFile.Image.CopyTo(fileStream);

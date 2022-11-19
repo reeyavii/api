@@ -228,6 +228,9 @@ namespace API.Migrations
                     b.Property<decimal?>("Amount")
                         .HasColumnType("money");
 
+                    b.Property<decimal?>("Balance")
+                        .HasColumnType("money");
+
                     b.Property<string>("DelinquentStatus")
                         .HasColumnType("nvarchar(max)");
 
@@ -297,6 +300,12 @@ namespace API.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("RefNo")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Status")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");

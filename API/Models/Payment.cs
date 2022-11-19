@@ -20,7 +20,8 @@ namespace API.Models
         public string? GcashNumber { get; set; }
         public string? GcashName { get; set; }
         public string? DelinquentStatus { get; set; } = "No";
-        
+        [Column(TypeName = "money")]
+        public decimal? Balance { get; set; }
 
 
 
