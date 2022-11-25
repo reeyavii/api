@@ -30,6 +30,8 @@ namespace API.Models
         public DbSet<Profile> Profiles { get; set; } = null!;      
 
         public DbSet<Notification> Notifications { get; set; } = null!;
+        public DbSet<ForgotPasswordVerification> ForgotPasswordVerifications { get; set; } = null!;
+
 
 
     }

@@ -23,10 +23,17 @@ namespace API.Controllers
         }
 
 
-        [HttpGet("list")]
-        public async Task<ActionResult<IEnumerable<Receipt>>> GetReceipts()
+        [HttpGet("list/{id}")]
+        public async Task<ActionResult<IEnumerable<Receipt>>> GetReceipts(int id)
         {
-            var receipts = await _context.Receipts.ToListAsync();
+            var receipts = await _context.Receipts.Where(r => r.PaymentId == id).OrderByDescending(r => r.Id).ToListAsync();
+            return receipts;
+        }
+
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<Receipt>>> GetReceiptsAdmin ()
+        {
+            var receipts = await _context.Receipts.OrderByDescending(r => r.Id).ToListAsync();
             return receipts;
         }
 
@@ -141,13 +148,13 @@ namespace API.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutReceipt(int id, Receipt receipt)
+        public async Task<ActionResult<IEnumerable<Receipt>>> PutReceipt(int id, Receipt receipt)
         {
             if (id != receipt.Id)
             {
                 return BadRequest();
             }
-
+            receipt.Status = "Approved"; 
             _context.Entry(receipt).State = EntityState.Modified;
 
             try
@@ -165,8 +172,9 @@ namespace API.Controllers
                     throw;
                 }
             }
+            var receipts = await _context.Receipts.Where(r => r.Status == receipt.Status).ToListAsync();
 
-            return NoContent();
+            return receipts;
         }
         private bool ReceiptExists(int id)
         {

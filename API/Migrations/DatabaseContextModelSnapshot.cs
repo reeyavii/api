@@ -162,6 +162,31 @@ namespace API.Migrations
                     b.ToTable("GroupMembers");
                 });
 
+            modelBuilder.Entity("API.Models.ForgotPasswordVerification", b =>
+                {
+                    b.Property<int?>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int?>("Id"), 1L, 1);
+
+                    b.Property<DateTime?>("ExpirationDateTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("IssuedDateTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Pin")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Username")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ForgotPasswordVerifications");
+                });
+
             modelBuilder.Entity("API.Models.Message", b =>
                 {
                     b.Property<string>("MessageId")

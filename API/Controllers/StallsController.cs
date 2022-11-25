@@ -31,7 +31,7 @@ namespace API.Controllers
             return stalls;
         } 
         [HttpPost]
-        public async Task<ActionResult<Stall>> PostStall(Stall stall)
+        public async Task<ActionResult<Stall>> PostStall([FromForm] Stall stall )
         {
             _context.Stalls.Add(stall);
             await _context.SaveChangesAsync();
