@@ -155,6 +155,27 @@ namespace API.Controllers
             }
             return BadRequest("Password Error");
         }
+        [Authorize]
+        [HttpPost]
+        [Route("forgot-password-reset")]
+        public async Task<IActionResult> ForgotPasswordReset([FromBody] Password model)
+        {
+            if (User.Identity != null)
+            {
+                var user = await _userManager.FindByNameAsync(User.Identity?.Name);
+                var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+                var result = await _userManager.ResetPasswordAsync(user, token, model.NewPassword);
+                if (
+                    result.Succeeded == true
+                    )
+                {
+                    return Ok("Update Password Success");
+                }
+                else
+                { return BadRequest("Password Error"); }
+            }
+            return BadRequest("Password Error");
+        }
 
         [HttpPost]
         [Route("update-number-request")]
@@ -427,7 +448,27 @@ namespace API.Controllers
             return Ok();
         }
 
-
+        [Authorize]
+        [HttpPost]
+        [Route("forgot-password-change")]
+        public async Task<IActionResult> ForgotPasswordChange([FromBody] Password model)
+        {
+            if (User.Identity != null)
+            {
+                var user = await _userManager.FindByNameAsync(User.Identity?.Name);
+                var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+                var result = await _userManager.ResetPasswordAsync(user,token, model.NewPassword);
+                if (
+                    result.Succeeded == true
+                    )
+                {
+                    return Ok("Update Password Success");
+                }
+                else
+                { return BadRequest("Password Error"); }
+            }
+            return BadRequest("Password Error");
+        }
 
     }
 }

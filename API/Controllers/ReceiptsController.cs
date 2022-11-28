@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using static System.IO.Path;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using API.Services;
 
 namespace API.Controllers
 {
@@ -14,19 +15,21 @@ namespace API.Controllers
         private readonly DatabaseContext _context;
         public static IWebHostEnvironment _webHostEnvironment;
         private readonly UserManager<AppUser> _userManager;
+        private readonly INotificationService _notif;
 
-        public ReceiptsController(DatabaseContext context, IWebHostEnvironment webHostEnvironment, UserManager<AppUser> userManager)
+        public ReceiptsController(DatabaseContext context, IWebHostEnvironment webHostEnvironment, UserManager<AppUser> userManager, INotificationService notif)
         {
             _context = context;
             _webHostEnvironment = webHostEnvironment;
             _userManager = userManager;
+            _notif = notif;
         }
 
 
         [HttpGet("list/{id}")]
         public async Task<ActionResult<IEnumerable<Receipt>>> GetReceipts(int id)
         {
-            var receipts = await _context.Receipts.Where(r => r.PaymentId == id).OrderByDescending(r => r.Id).ToListAsync();
+            var receipts = await _context.Receipts.Where(r => r.PaymentId == id).OrderByDescending(r => r.Id).ToListAsync();         
             return receipts;
         }
 
@@ -34,6 +37,12 @@ namespace API.Controllers
         public async Task<ActionResult<IEnumerable<Receipt>>> GetReceiptsAdmin ()
         {
             var receipts = await _context.Receipts.OrderByDescending(r => r.Id).ToListAsync();
+            foreach(Receipt receipt in receipts)
+            {
+            //var payment = await _context.Payments.FindAsync(id);
+            //var user = await _userManager.FindByIdAsync(payment.userId);
+            }  
+            
             return receipts;
         }
 
@@ -102,9 +111,11 @@ namespace API.Controllers
                     if (User.Identity != null)
                     {
                         var user = await _userManager.FindByNameAsync(User.Identity?.Name);
+                        string fullName = user.FirstName + " " + user.LastName;
+                        var notification = _notif.SendNotif(fullName, NotificationType.RequestPaymentConfirmation, "Request Payment Confirmation");
+                        _context.Notifications.Add(notification);
                     }
-                        
-                   
+
                     using (FileStream fileStream = System.IO.File.Create(path + fileName))
                     {
                         objectFile.Image.CopyTo(fileStream);
@@ -156,7 +167,10 @@ namespace API.Controllers
             }
             receipt.Status = "Approved"; 
             _context.Entry(receipt).State = EntityState.Modified;
-
+            var payment = await _context.Payments.FindAsync(receipt.PaymentId);
+            payment.Balance = payment.Amount - receipt.Amount;
+            payment.TotalPayment = payment.Balance + payment.Amount;
+            _context.Entry(payment).State = EntityState.Modified;
             try
             {
                 await _context.SaveChangesAsync();

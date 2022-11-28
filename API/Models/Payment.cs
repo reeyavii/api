@@ -22,6 +22,9 @@ namespace API.Models
         public string? DelinquentStatus { get; set; } = "No";
         [Column(TypeName = "money")]
         public decimal? Balance { get; set; }
+        [Column(TypeName = "money")]
+        public decimal? TotalPayment { get; set; }
+
 
 
 

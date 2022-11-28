@@ -20,6 +20,7 @@ namespace API.Models
         public string? ContactNumber { get; set; }
         public string? Email { get; set; }
         public string? Status { get; set; } = "requested";
+        public string? delinquent { get; set; } = "no";
         public string? Created { get; set; } = DateTime.Now.ToString(Constants.DateTimeFormat);
         public string? ApprovedDate { get; set; }
         public string? CivilStatus { get; set; }

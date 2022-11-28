@@ -22,6 +22,8 @@ namespace API.Models
         
         public string? Name{ get; set; }
         public string? Status { get; set; } = "Pending";
+        public string? FirstName { get; set; }
+        public string? LastName { get; set; }
 
         
 
