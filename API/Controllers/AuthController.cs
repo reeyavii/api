@@ -112,6 +112,13 @@ namespace API.Controllers
                 UserId = user.Id,
                 Email = model.Email,
                 Address = model.Address,
+                LastName = model.LastName,
+                FirstName = model.FirstName,
+                MiddleInitial = model.MiddleInitial,
+                Sex=model.Sex,
+                Status=model.Status,
+                Age = model.Age,
+                PhoneNumber = model.PhoneNumber,
                 ImageUrl = "",
             };
 

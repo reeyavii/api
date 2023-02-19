@@ -33,6 +33,7 @@ namespace API.Controllers
         [HttpPost]
         public async Task<ActionResult<Stall>> PostStall([FromForm] Stall stall )
         {
+            stall.StallImage = null;
             _context.Stalls.Add(stall);
             await _context.SaveChangesAsync();
 
@@ -63,52 +64,91 @@ namespace API.Controllers
             }
             try
             {
-
-                if (stall.StallImage.Length > 0)
+                if (stall.StallImage != null)  //add condition to process without image file
                 {
-                    string path = _webHostEnvironment.WebRootPath + "\\uploads\\";
-                    if (!Directory.Exists(path))
+
+                    if (stall.StallImage.Length > 0)
                     {
+                        string path = _webHostEnvironment.WebRootPath + "\\uploads\\";
+                        if (!Directory.Exists(path))
+                        {
 
-                        Directory.CreateDirectory(path);
+                            Directory.CreateDirectory(path);
 
-                    }
-                    Console.WriteLine($"path={path}");
-                    string fileName = "";
+                        }
+                        Console.WriteLine($"path={path}");
+                        string fileName = "";
 
-                    if (stall.StallImage.FileName.Contains(" "))
-                    {
-                        fileName = string.Join("", stall.StallImage.FileName.Split(" "));
+                        if (stall.StallImage.FileName.Contains(" "))
+                        {
+                            fileName = string.Join("", stall.StallImage.FileName.Split(" "));
+                        }
+                        else
+                        {
+                            fileName = stall.StallImage.FileName;
+                        }
+
+                        stall.ImageUrl = fileName;
+
+                        using (FileStream fileStream = System.IO.File.Create(path + fileName))
+                        {
+                            stall.StallImage.CopyTo(fileStream);
+                            fileStream.Flush();
+                            _context.Entry(stall).State = EntityState.Modified;
+
+                            try
+                            {
+                                await _context.SaveChangesAsync();
+                            }
+                            catch (DbUpdateConcurrencyException)
+                            {
+                                throw;
+                            }
+
+
+                            return Ok();
+                        }
                     }
                     else
                     {
-                        fileName = stall.StallImage.FileName;
-                    }
-
-                    stall.ImageUrl = fileName;
-
-                    using (FileStream fileStream = System.IO.File.Create(path + fileName))
-                    {
-                        stall.StallImage.CopyTo(fileStream);
-                        fileStream.Flush();
-                        _context.Entry(stall).State = EntityState.Modified;
-
-                        try
-                        {
-                            await _context.SaveChangesAsync();
-                        }
-                        catch (DbUpdateConcurrencyException)
-                        {
-                            throw;
-                        }
-
-
-                        return Ok();
+                        return NoContent();
                     }
                 }
+                
                 else
                 {
-                    return NoContent();
+                    if (stall.Floor == null)
+                    {
+                        stall.Floor = "";
+                    }
+                    Stall newStall = new Stall
+                    {
+                        Id = stall.Id,
+                        StallImage = stall.StallImage,
+                        StallNumber = stall.StallNumber,
+                        Dimension = stall.Dimension,
+                        MonthlyPayment = stall.MonthlyPayment,
+                        Description = stall.Description,
+                        Status = stall.Status,
+                        StallType = stall.StallType,
+                        Mapping = stall.Mapping,
+                        Floor = stall.Floor,
+                        ImageUrl = stall.ImageUrl
+                    };
+                    
+                    _context.Entry(newStall).State = EntityState.Modified;
+
+                    try
+                    {
+                        await _context.SaveChangesAsync();
+                        return Ok();
+                    }
+                    catch (DbUpdateConcurrencyException)
+                    {
+                        throw;
+                        return BadRequest();
+                    }
+
                 }
             }
             catch (Exception ex)

@@ -1,2 +1,0 @@
-﻿Create Order model
-Create OrderProduct model

@@ -111,16 +111,18 @@ namespace API.Controllers
                 var DueDate = $"{CurrentDate?.ToString("MM")}/10/{CurrentDate?.ToString("yyyy")}";
                 DateTime DueDateTime = DateTime.Parse(DueDate);
                 if (CurrentDate > DueDateTime)
-            {
-                if (latest < DueDateTime)
                 {
-                    userInfo.delinquent = "yes";
+                    if (latest < DueDateTime)
+                    {
+                        userInfo.delinquent = "yes";
+                        }
+                    else
+                    {
+                        userInfo.delinquent = "no";
                     }
-                else
-                {
-                    userInfo.delinquent = "no";
-               }
-            }
+                    await _context.SaveChangesAsync();
+                    // check if delinquent actually saves
+                }
             }
           
             return Task(userInfo);

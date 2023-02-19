@@ -8,9 +8,9 @@ namespace API.Sms
     public class SmsService : ISmsService
     {
 
-        private static string accountSid = "AC09e955e9339ee5f557d73311e2ded524";
-        private static string authToken = "2182f0ee4d6557d1a0eff7ce7a91f01a";
-        private static string fromNumber = "+19034947518";
+        private static string accountSid = "AC1679dc7dd92f88f8b952e4f1cb554e15";
+        private static string authToken = "49f78267e4f0f4b55256efb0025f6637";
+        private static string fromNumber = "+13855264985";
 
 
 

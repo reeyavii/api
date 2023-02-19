@@ -25,7 +25,7 @@ namespace API.Models
         public string? ApprovedDate { get; set; }
         public string? CivilStatus { get; set; }
         public string? EditAllowed { get; set; } = "no";
-        public string? EditRequested {get; set; } = "no";
+        public string? EditRequested {get; set; } = "no"; // if yes notice already sent: if no will display send notice
         public string? Municipality { get; set; }
         public string? Province { get; set; }
         public string? ZipCode { get; set; }
